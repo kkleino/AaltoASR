@@ -12,7 +12,7 @@ int
 main(int argc, char *argv[])
 {
   try {
-    config("usage: lm [OPTION...]\n")
+    config("usage: fsalm-convert [OPTION...]\n")
       ('h', "help", "", "", "display help")
       ('\0', "arpa=FILE", "arg", "", "read ARPA language model")
       ('\0', "bin=FILE", "arg", "", "read binary fsa model")

@@ -16,6 +16,8 @@
 #include "OneFrameAcoustics.hh"
 
 typedef std::string bytestype;
+typedef std::pair<std::string,std::pair<double,double> > timed_token_type;
+typedef std::vector<timed_token_type> timed_token_stream_type;
 
 class Toolbox {
 public:
@@ -171,6 +173,7 @@ public:
   void prune(int frame, int top);
   int paths() const { return HypoPath::g_count; }
 
+  const timed_token_stream_type &best_timed_hypo_string(bool print_all);
   const bytestype &best_hypo_string(bool print_all, bool output_time);
 
   // Options
@@ -270,10 +273,6 @@ public:
   void set_word_boundary(const std::string &word);
 
   void set_sentence_boundary(const std::string &start, const std::string &end) { m_tp_search->set_sentence_boundary(start, end); }
-
-  void clear_hesitation_words() { m_tp_search->clear_hesitation_words(); }
-
-  void add_hesitation_word(const std::string & word) { m_tp_search->add_hesitation_word(word); }
 
   void set_dummy_word_boundaries(bool value) { m_search->set_dummy_word_boundaries(value); }
   void set_require_sentence_end(bool s) { m_tp_search->set_require_sentence_end(s); }

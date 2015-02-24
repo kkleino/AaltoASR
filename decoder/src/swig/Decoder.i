@@ -4,6 +4,7 @@
 
 %module Decoder
 %{
+#include <cstddef>
 #include "fsalm/LM.hh"
 #include "Toolbox.hh"
 using namespace fsalm;
@@ -35,11 +36,34 @@ typedef std::string bytestype;
 	// This is for python <= 2.4
   //$result = Py_BuildValue("s#",$1->c_str(),$1->size());
 }
+// This migth work for modern pythons only (>=3.0)
+//#if defined(PY3)
+typedef std::vector<std::pair<std::string,std::pair<double,double> > > timed_token_stream_type;
+%typemap(out) timed_token_stream_type& {
+  $result = PyList_New(0);
+  for(size_t i = 0; i < $1->size(); i++){
+    PyObject *str,*start_time,*end_time,*new_token;
+
+    str = PyBytes_FromStringAndSize(static_cast<const char*>($1->at(i).first.c_str()),$1->at(i).first.size());
+    start_time = PyFloat_FromDouble(static_cast<const double>($1->at(i).second.first));
+    end_time = PyFloat_FromDouble(static_cast<const double>($1->at(i).second.second));
+    new_token = PyDict_New();
+    PyDict_SetItem(new_token,PyString_FromString("token"),str);
+    PyDict_SetItem(new_token,PyString_FromString("starttime"),start_time);
+    PyDict_SetItem(new_token,PyString_FromString("endtime"),end_time);
+    PyList_Append($result,new_token);
+    Py_DECREF(str);
+    Py_DECREF(start_time);
+    Py_DECREF(end_time);
+    Py_DECREF(new_token);
+  }
+}
+//#endif
+
 
 // Instantiate templates used 
 %template(StringVector) std::vector<std::string>;
 %template(FloatVector) std::vector<float>;
-
 
 #if !defined(PY3)
 // This is disabled, since doesn't exists for py3 any more
@@ -160,6 +184,7 @@ public:
   void print_best_lm_history();
   void print_best_lm_history_to_file(FILE *out);
   const bytestype &best_hypo_string(bool print_all, bool output_time);
+  const timed_token_stream_type &best_timed_hypo_string(bool print_all);
   void write_state_segmentation(const std::string &file);
 
   void set_forced_end(bool forced_end);
@@ -177,19 +202,19 @@ public:
   void set_rabiner_post_mode(int mode);
   void set_hypo_beam(float beam);
   void set_global_beam(float beam);
-	void set_word_end_beam(float beam);
-	void set_eq_depth_beam(float beam);
+  void set_word_end_beam(float beam);
+  void set_eq_depth_beam(float beam);
   void set_eq_word_count_beam(float beam);
-	void set_fan_in_beam(float beam);
-	void set_fan_out_beam(float beam);
-	void set_tp_state_beam(float beam);
+  void set_fan_in_beam(float beam);
+  void set_fan_out_beam(float beam);
+  void set_tp_state_beam(float beam);
   void set_max_state_duration(int duration);
   void set_split_multiwords(bool b);
   void set_cross_word_triphones(bool cw_triphones);
   void set_silence_is_word(bool b);
-	void set_ignore_case(bool b);		
+  void set_ignore_case(bool b);		
   void set_lm_lookahead(int lmlh);
-	void set_insertion_penalty(float ip);
+  void set_insertion_penalty(float ip);
   void set_print_text_result(int print);
   void set_print_state_segmentation(int print);
   void set_keep_state_segmentation(int keep);
@@ -200,8 +225,6 @@ public:
   void set_multiple_endings(int multiple_endings);
   void set_word_boundary(const std::string &word);
   void set_sentence_boundary(const std::string &start, const std::string &end);
-  void clear_hesitation_words();
-  void add_hesitation_word(const std::string &word);
   void set_dummy_word_boundaries(bool value);
   void set_generate_word_graph(bool value);
   void set_use_word_pair_approximation(bool value);
@@ -213,30 +236,15 @@ public:
 
   void prune_lm_lookahead_buffers(int min_delta, int max_depth);
 
-	void print_prunings();
+  void print_prunings();
   void print_hypo(Hypo &hypo);
   void print_sure();
-	void write_word_history(const std::string &file_name);
-	void print_lm_history();
-	
-	void print_tp_lex_node(int node);
+  void write_word_history(const std::string &file_name);
+  void print_lm_history();
+
+  void print_tp_lex_node(int node);
   void print_tp_lex_lookahead(int node);
 
-	void debug_print_best_lm_history();
+  void debug_print_best_lm_history();
 };
 
-// A decoder for FSTs
-
-// The recognizer operates on iso-8859-15 charset, we cannot return the string directly
-// Let us return it as bytes, which can then be decoded in python to get a real 
-// python string s.decode('iso-8859-15') 
-typedef std::string bytestype;
-%typemap(out) bytestype {
-  $result = PyBytes_FromStringAndSize(static_cast<const char*>($1.c_str()),$1.size());
-}
-
-%module FstSearch
-%include FstSearch.hh
-%{
-  #include "FstSearch.hh"
-%}

@@ -1,7 +1,9 @@
 add_subdirectory( fsalm )
 add_subdirectory( misc )
 add_subdirectory( morpheus )
-add_subdirectory( swig )
+if(NOT DISABLE_SWIG)
+  add_subdirectory( swig )
+endif(NOT DISABLE_SWIG)
 include_directories(".")
 
 set(DECODERSOURCES 
@@ -26,9 +28,9 @@ set(DECODERSOURCES
   ArpaReader.cc
   InterTreeGram.cc
   WordClasses.cc
+  FstAcoustics.cc
   Fst.cc
-  FstSearch.cc
-  FstWithPhoneLoop.cc
+  FstConfidence.cc
 )
 
 ADD_DEFINITIONS(-std=gnu++0x)
@@ -43,3 +45,6 @@ target_link_libraries ( hmm2fsm decoder )
 #target_link_libraries ( fst_test decoder )
 
 install(TARGETS arpa2bin bin2arpa DESTINATION bin)
+file(GLOB DECODER_HEADERS "*.hh") 
+install(FILES ${DECODER_HEADERS} DESTINATION include)
+install(TARGETS decoder DESTINATION lib)
